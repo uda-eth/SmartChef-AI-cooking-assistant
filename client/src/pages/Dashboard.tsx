@@ -79,6 +79,7 @@ export default function Dashboard() {
                 <Button 
                   onClick={handleGeneratePlan} 
                   disabled={isGenerating}
+                  className={isGenerating ? "opacity-70 cursor-not-allowed" : ""}
                 >
                   {isGenerating ? (
                     <>
@@ -101,6 +102,7 @@ export default function Dashboard() {
                   <Button 
                     onClick={handleGeneratePlan}
                     disabled={isGenerating}
+                    className={isGenerating ? "opacity-70 cursor-not-allowed" : ""}
                   >
                     {isGenerating ? (
                       <>
