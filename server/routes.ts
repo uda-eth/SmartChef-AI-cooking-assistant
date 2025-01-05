@@ -17,7 +17,7 @@ import { generateMealPlan, suggestRecipeSubstitutions } from "./openai";
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
-  // Ingredient management
+  // Ingredient management with user isolation
   app.get("/api/ingredients", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Not authenticated");
@@ -49,7 +49,7 @@ export function registerRoutes(app: Express): Server {
     res.json(newIngredient[0]);
   });
 
-  // Meal planning
+  // Meal planning with user isolation
   app.post("/api/meal-plan", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Not authenticated");
@@ -88,21 +88,21 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
-    const [currentPlan] = await db
+    const currentPlan = await db
       .select()
       .from(mealPlans)
       .where(eq(mealPlans.userId, req.user.id))
       .orderBy(mealPlans.weekStart, "desc")
       .limit(1);
 
-    if (!currentPlan) {
+    if (!currentPlan || currentPlan.length === 0) {
       return res.json(null);
     }
 
-    res.json(currentPlan);
+    res.json(currentPlan[0]);
   });
 
-  // Recipe substitutions
+  // Recipe substitutions with user isolation
   app.post("/api/recipe/substitutions", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Not authenticated");
@@ -121,7 +121,7 @@ export function registerRoutes(app: Express): Server {
     res.json(substitutions);
   });
 
-  // Favorite recipes
+  // Favorite recipes with user isolation
   app.post("/api/recipes/favorite/:recipeId", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Not authenticated");
@@ -130,7 +130,7 @@ export function registerRoutes(app: Express): Server {
     const recipeId = parseInt(req.params.recipeId);
 
     // Check if already favorited by this user
-    const [existing] = await db
+    const existing = await db
       .select()
       .from(favoriteRecipes)
       .where(
@@ -141,7 +141,7 @@ export function registerRoutes(app: Express): Server {
       )
       .limit(1);
 
-    if (existing) {
+    if (existing && existing.length > 0) {
       return res.status(400).json({ message: "Recipe already in favorites" });
     }
 
@@ -195,28 +195,30 @@ export function registerRoutes(app: Express): Server {
     res.json(favorites);
   });
 
-  // PDF Generation
+  // PDF Generation with user isolation
   app.get("/api/meal-plan/pdf", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Not authenticated");
     }
 
-    const [currentPlan] = await db
+    const currentPlan = await db
       .select()
       .from(mealPlans)
       .where(eq(mealPlans.userId, req.user.id))
       .orderBy(mealPlans.weekStart, "desc")
       .limit(1);
 
-    if (!currentPlan) {
+    if (!currentPlan || currentPlan.length === 0) {
       return res.status(404).send("No meal plan found");
     }
+
+    const plan = currentPlan[0];
 
     const doc = new PDFDocument();
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=meal-plan-${currentPlan.weekStart}.pdf`
+      `attachment; filename=meal-plan-${plan.weekStart}.pdf`
     );
 
     doc.pipe(res);
@@ -224,7 +226,7 @@ export function registerRoutes(app: Express): Server {
     doc.fontSize(20).text("Weekly Meal Plan", { align: "center" });
     doc.moveDown();
 
-    const meals = (currentPlan.meals as any).meals;
+    const meals = (plan.meals as any).meals;
     const days = [
       "Monday",
       "Tuesday",
