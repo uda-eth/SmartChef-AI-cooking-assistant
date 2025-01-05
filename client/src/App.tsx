@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import InventoryWizard from "./pages/InventoryWizard";
+import Favorites from "./pages/Favorites";
 
 function App() {
   const { user, isLoading } = useUser();
@@ -24,6 +25,7 @@ function App() {
   return (
     <Switch>
       <Route path="/inventory" component={InventoryWizard} />
+      <Route path="/favorites" component={Favorites} />
       <Route path="/" component={Dashboard} />
     </Switch>
   );
