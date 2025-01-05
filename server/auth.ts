@@ -125,6 +125,7 @@ export function setupAuth(app: Express) {
         .values({
           username,
           password: hashedPassword,
+          hasCompletedOnboarding: false,
         })
         .returning();
 
@@ -134,7 +135,11 @@ export function setupAuth(app: Express) {
         }
         return res.json({
           message: "Registration successful",
-          user: { id: newUser.id, username: newUser.username },
+          user: { 
+            id: newUser.id, 
+            username: newUser.username,
+            hasCompletedOnboarding: newUser.hasCompletedOnboarding 
+          },
         });
       });
     } catch (error) {
@@ -166,7 +171,11 @@ export function setupAuth(app: Express) {
 
         return res.json({
           message: "Login successful",
-          user: { id: user.id, username: user.username },
+          user: { 
+            id: user.id, 
+            username: user.username,
+            hasCompletedOnboarding: user.hasCompletedOnboarding 
+          },
         });
       });
     })(req, res, next);

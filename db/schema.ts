@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -6,11 +6,12 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
+  hasCompletedOnboarding: boolean("has_completed_onboarding").default(false).notNull(),
 });
 
 export const ingredients = pgTable("ingredients", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: text("name").notNull(),
   quantity: integer("quantity").notNull(),
   unit: text("unit").notNull(),
@@ -19,39 +20,60 @@ export const ingredients = pgTable("ingredients", {
 
 export const recipes = pgTable("recipes", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
   name: text("name").notNull(),
   instructions: text("instructions").notNull(),
   ingredients: jsonb("ingredients").notNull(),
   imageUrl: text("image_url"),
   prepTime: integer("prep_time").notNull(),
   servings: integer("servings").notNull(),
-  difficulty: text("difficulty").notNull(), // Added difficulty field
+  difficulty: text("difficulty").notNull(),
 });
 
 export const favoriteRecipes = pgTable("favorite_recipes", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  recipeId: integer("recipe_id").references(() => recipes.id).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  recipeId: integer("recipe_id").references(() => recipes.id, { onDelete: 'cascade' }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const mealPlans = pgTable("meal_plans", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
   weekStart: timestamp("week_start").notNull(),
   meals: jsonb("meals").notNull(),
 });
 
+// Define relationships
 export const userRelations = relations(users, ({ many }) => ({
   ingredients: many(ingredients),
+  recipes: many(recipes),
   mealPlans: many(mealPlans),
   favoriteRecipes: many(favoriteRecipes),
 }));
 
-export const recipeRelations = relations(recipes, ({ many }) => ({
-  favoriteRecipes: many(favoriteRecipes),
+export const recipeRelations = relations(recipes, ({ one }) => ({
+  user: one(users, {
+    fields: [recipes.userId],
+    references: [users.id],
+  }),
 }));
 
+export const ingredientRelations = relations(ingredients, ({ one }) => ({
+  user: one(users, {
+    fields: [ingredients.userId],
+    references: [users.id],
+  }),
+}));
+
+export const mealPlanRelations = relations(mealPlans, ({ one }) => ({
+  user: one(users, {
+    fields: [mealPlans.userId],
+    references: [users.id],
+  }),
+}));
+
+// Types and schemas
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 export type InsertIngredient = typeof ingredients.$inferInsert;

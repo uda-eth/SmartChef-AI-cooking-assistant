@@ -10,12 +10,41 @@ import {
   favoriteRecipes,
   insertIngredientSchema,
   insertMealPlanSchema,
+  users,
 } from "@db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateMealPlan, suggestRecipeSubstitutions } from "./openai";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // Check onboarding status
+  app.get("/api/onboarding/status", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.user.id))
+      .limit(1);
+
+    res.json({ hasCompletedOnboarding: user.hasCompletedOnboarding });
+  });
+
+  app.post("/api/onboarding/complete", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    await db
+      .update(users)
+      .set({ hasCompletedOnboarding: true })
+      .where(eq(users.id, req.user.id));
+
+    res.json({ message: "Onboarding completed" });
+  });
 
   // Ingredient management with user isolation
   app.get("/api/ingredients", async (req, res) => {
@@ -66,10 +95,8 @@ export function registerRoutes(app: Express): Server {
       preferences: req.body.preferences,
     });
 
-    // Clear any existing meal plans for this user before creating a new one
-    await db
-      .delete(mealPlans)
-      .where(eq(mealPlans.userId, req.user.id));
+    // Delete any existing meal plans for this user
+    await db.delete(mealPlans).where(eq(mealPlans.userId, req.user.id));
 
     const result = await db
       .insert(mealPlans)
@@ -121,6 +148,33 @@ export function registerRoutes(app: Express): Server {
     res.json(substitutions);
   });
 
+  // Recipe management with user isolation
+  app.post("/api/recipes", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const newRecipe = await db
+      .insert(recipes)
+      .values({ ...req.body, userId: req.user.id })
+      .returning();
+
+    res.json(newRecipe[0]);
+  });
+
+  app.get("/api/recipes", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const userRecipes = await db
+      .select()
+      .from(recipes)
+      .where(eq(recipes.userId, req.user.id));
+
+    res.json(userRecipes);
+  });
+
   // Favorite recipes with user isolation
   app.post("/api/recipes/favorite/:recipeId", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -128,6 +182,17 @@ export function registerRoutes(app: Express): Server {
     }
 
     const recipeId = parseInt(req.params.recipeId);
+
+    // Check if recipe exists and belongs to user
+    const recipe = await db
+      .select()
+      .from(recipes)
+      .where(eq(recipes.id, recipeId))
+      .limit(1);
+
+    if (!recipe || recipe.length === 0) {
+      return res.status(404).json({ message: "Recipe not found" });
+    }
 
     // Check if already favorited by this user
     const existing = await db
