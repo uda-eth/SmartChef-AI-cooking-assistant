@@ -12,11 +12,11 @@ export function useMealPlan() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: currentPlan, isLoading } = useQuery<SelectMealPlan>({
+  const { data: currentPlan, isLoading: isLoadingPlan } = useQuery<SelectMealPlan>({
     queryKey: ["/api/meal-plan/current"],
   });
 
-  const generatePlan = useMutation({
+  const generatePlanMutation = useMutation({
     mutationFn: async (preferences: MealPlanPreferences) => {
       const response = await fetch("/api/meal-plan", {
         method: "POST",
@@ -73,8 +73,9 @@ export function useMealPlan() {
 
   return {
     currentPlan,
-    isLoading,
-    generatePlan: generatePlan.mutate,
+    isLoading: isLoadingPlan,
+    generatePlan: generatePlanMutation.mutate,
+    isGenerating: generatePlanMutation.isPending,
     getSubstitutions: getSubstitutions.mutateAsync,
   };
 }

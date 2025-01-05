@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useInventory } from "@/hooks/use-inventory";
@@ -12,8 +12,7 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, logout } = useUser();
   const { ingredients, isLoading: isLoadingInventory } = useInventory();
-  const { currentPlan, generatePlan, isLoading: isLoadingMealPlan } = useMealPlan();
-  const [isGenerating, setIsGenerating] = useState(false);
+  const { currentPlan, generatePlan, isLoading: isLoadingMealPlan, isGenerating } = useMealPlan();
 
   useEffect(() => {
     if (ingredients?.length === 0) {
@@ -26,16 +25,11 @@ export default function Dashboard() {
   };
 
   const handleGeneratePlan = async () => {
-    setIsGenerating(true);
-    try {
-      await generatePlan({
-        mealCount: 7,
-        dietary: [],
-        cuisineTypes: [],
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    await generatePlan({
+      mealCount: 7,
+      dietary: [],
+      cuisineTypes: [],
+    });
   };
 
   if (isLoadingInventory || isLoadingMealPlan) {
@@ -79,7 +73,6 @@ export default function Dashboard() {
                 <Button 
                   onClick={handleGeneratePlan} 
                   disabled={isGenerating}
-                  className={isGenerating ? "opacity-70 cursor-not-allowed" : ""}
                 >
                   {isGenerating ? (
                     <>
@@ -102,7 +95,6 @@ export default function Dashboard() {
                   <Button 
                     onClick={handleGeneratePlan}
                     disabled={isGenerating}
-                    className={isGenerating ? "opacity-70 cursor-not-allowed" : ""}
                   >
                     {isGenerating ? (
                       <>
