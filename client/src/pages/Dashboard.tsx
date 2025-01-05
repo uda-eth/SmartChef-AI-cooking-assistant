@@ -6,7 +6,7 @@ import { useMealPlan } from "@/hooks/use-meal-plan";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import WeeklyCalendar from "@/components/WeeklyCalendar";
-import { Loader2, LogOut, Plus } from "lucide-react";
+import { ChefHat, Loader2, LogOut, Plus } from "lucide-react";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
