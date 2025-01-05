@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import RecipeView from "./RecipeView";
-import { Clock, Star } from "lucide-react";
+import { Clock, Star, Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,7 +34,6 @@ export default function MealCard({ meal, day }: MealCardProps) {
   // Query to check if recipe is in favorites
   const { data: favorites = [] } = useQuery<Array<{ id: number }>>({
     queryKey: ["/api/recipes/favorites"],
-    enabled: !!meal.id,
   });
 
   const isFavorite = favorites.some(fav => fav.id === meal.id);
@@ -42,7 +41,22 @@ export default function MealCard({ meal, day }: MealCardProps) {
   // Mutation for toggling favorite status
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
-      if (!meal.id) return;
+      if (!meal.id) {
+        // Save the recipe first if it doesn't have an ID
+        const response = await fetch("/api/recipes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(meal),
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        const savedRecipe = await response.json();
+        meal.id = savedRecipe.id;
+      }
 
       const response = await fetch(`/api/recipes/favorite/${meal.id}`, {
         method: isFavorite ? 'DELETE' : 'POST',
@@ -74,18 +88,20 @@ export default function MealCard({ meal, day }: MealCardProps) {
   return (
     <Card className="h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-lg">{day}</CardTitle>
-        {meal.id && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => toggleFavoriteMutation.mutate()}
-            disabled={toggleFavoriteMutation.isPending}
-            className={isFavorite ? 'text-yellow-500 hover:text-yellow-600' : 'hover:text-yellow-500'}
-          >
+        <CardTitle className="text-lg font-semibold">{day}</CardTitle>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => toggleFavoriteMutation.mutate()}
+          disabled={toggleFavoriteMutation.isPending}
+          className={`${isFavorite ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-yellow-500'} transition-colors`}
+        >
+          {toggleFavoriteMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
             <Star className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
-          </Button>
-        )}
+          )}
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
