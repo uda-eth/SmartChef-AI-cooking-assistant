@@ -274,10 +274,16 @@ export function registerRoutes(app: Express): Server {
       ...recipe,
       instructions: Array.isArray(recipe.instructions)
         ? recipe.instructions
-        : recipe.instructions?.split("\n").filter(Boolean) || [],
+        : typeof recipe.instructions === 'string'
+          ? recipe.instructions.startsWith('[')
+            ? JSON.parse(recipe.instructions)
+            : recipe.instructions.split("\n").filter(Boolean)
+          : [],
       ingredients: Array.isArray(recipe.ingredients)
         ? recipe.ingredients
-        : [],
+        : typeof recipe.ingredients === 'string'
+          ? JSON.parse(recipe.ingredients)
+          : [],
     }));
 
     res.json(formattedFavorites);
