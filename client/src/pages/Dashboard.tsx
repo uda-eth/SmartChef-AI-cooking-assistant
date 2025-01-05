@@ -83,10 +83,13 @@ export default function Dashboard() {
                   {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Plan...
+                      AI Generating Your Meal Plan...
                     </>
                   ) : (
-                    'Generate New Plan'
+                    <>
+                      <ChefHat className="mr-2 h-4 w-4" />
+                      Generate New Plan
+                    </>
                   )}
                 </Button>
               </div>
