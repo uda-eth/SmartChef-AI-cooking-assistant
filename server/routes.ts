@@ -160,7 +160,15 @@ export function registerRoutes(app: Express): Server {
 
     const newRecipe = await db
       .insert(recipes)
-      .values({ ...req.body, userId: req.user.id })
+      .values({ 
+        ...req.body, 
+        userId: req.user.id,
+        instructions: req.body.instructions || [],
+        ingredients: req.body.ingredients || [],
+        prepTime: req.body.prepTime || 30,
+        servings: req.body.servings || 4,
+        difficulty: req.body.difficulty || 'medium',
+      })
       .returning();
 
     res.json(newRecipe[0]);
