@@ -89,6 +89,10 @@ export function registerRoutes(app: Express): Server {
       .orderBy(mealPlans.weekStart, "desc")
       .limit(1);
 
+    if (!currentPlan) {
+      return res.json(null);
+    }
+
     res.json(currentPlan);
   });
 
@@ -118,6 +122,23 @@ export function registerRoutes(app: Express): Server {
     }
 
     const recipeId = parseInt(req.params.recipeId);
+
+    // Check if already favorited
+    const [existing] = await db
+      .select()
+      .from(favoriteRecipes)
+      .where(
+        and(
+          eq(favoriteRecipes.userId, req.user.id),
+          eq(favoriteRecipes.recipeId, recipeId)
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      return res.status(400).json({ message: "Recipe already in favorites" });
+    }
+
     await db.insert(favoriteRecipes).values({
       userId: req.user.id,
       recipeId,
@@ -150,10 +171,20 @@ export function registerRoutes(app: Express): Server {
     }
 
     const favorites = await db
-      .select()
+      .select({
+        id: recipes.id,
+        name: recipes.name,
+        instructions: recipes.instructions,
+        ingredients: recipes.ingredients,
+        imageUrl: recipes.imageUrl,
+        prepTime: recipes.prepTime,
+        servings: recipes.servings,
+        difficulty: recipes.difficulty,
+        favoriteId: favoriteRecipes.id,
+      })
       .from(favoriteRecipes)
       .where(eq(favoriteRecipes.userId, req.user.id))
-      .leftJoin(recipes, eq(favoriteRecipes.recipeId, recipes.id));
+      .innerJoin(recipes, eq(favoriteRecipes.recipeId, recipes.id));
 
     res.json(favorites);
   });
