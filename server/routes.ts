@@ -55,6 +55,7 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
+    // Only get ingredients for the current user
     const userIngredients = await db
       .select()
       .from(ingredients)
@@ -64,6 +65,11 @@ export function registerRoutes(app: Express): Server {
       ingredients: userIngredients,
       preferences: req.body.preferences,
     });
+
+    // Clear any existing meal plans for this user before creating a new one
+    await db
+      .delete(mealPlans)
+      .where(eq(mealPlans.userId, req.user.id));
 
     const result = await db
       .insert(mealPlans)
@@ -123,7 +129,7 @@ export function registerRoutes(app: Express): Server {
 
     const recipeId = parseInt(req.params.recipeId);
 
-    // Check if already favorited
+    // Check if already favorited by this user
     const [existing] = await db
       .select()
       .from(favoriteRecipes)
