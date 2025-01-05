@@ -160,14 +160,14 @@ export function registerRoutes(app: Express): Server {
 
     const newRecipe = await db
       .insert(recipes)
-      .values({ 
-        ...req.body, 
+      .values({
+        ...req.body,
         userId: req.user.id,
         instructions: req.body.instructions || [],
         ingredients: req.body.ingredients || [],
         prepTime: req.body.prepTime || 30,
         servings: req.body.servings || 4,
-        difficulty: req.body.difficulty || 'medium',
+        difficulty: req.body.difficulty || "medium",
       })
       .returning();
 
@@ -269,7 +269,18 @@ export function registerRoutes(app: Express): Server {
       .where(eq(favoriteRecipes.userId, req.user.id))
       .innerJoin(recipes, eq(favoriteRecipes.recipeId, recipes.id));
 
-    res.json(favorites);
+    // Ensure instructions is always an array
+    const formattedFavorites = favorites.map((recipe) => ({
+      ...recipe,
+      instructions: Array.isArray(recipe.instructions)
+        ? recipe.instructions
+        : recipe.instructions?.split("\n").filter(Boolean) || [],
+      ingredients: Array.isArray(recipe.ingredients)
+        ? recipe.ingredients
+        : [],
+    }));
+
+    res.json(formattedFavorites);
   });
 
   // PDF Generation with user isolation
