@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ChefHat, AlertTriangle } from "lucide-react";
+import { Loader2, ChefHat, AlertTriangle, Star, Download } from "lucide-react";
 
 type Recipe = {
   name: string;
@@ -16,6 +16,8 @@ type Recipe = {
   instructions: string[];
   prepTime: number;
   servings: number;
+  difficulty: "easy" | "medium" | "hard";
+  id?: number;
 };
 
 type RecipeViewProps = {
@@ -26,6 +28,7 @@ export default function RecipeView({ recipe }: RecipeViewProps) {
   const { getSubstitutions } = useMealPlan();
   const [substitutions, setSubstitutions] = useState<Array<{ original: string; substitute: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const handleGetSubstitutions = async () => {
     setIsLoading(true);
@@ -39,13 +42,90 @@ export default function RecipeView({ recipe }: RecipeViewProps) {
     }
   };
 
+  const toggleFavorite = async () => {
+    if (!recipe.id) return;
+
+    try {
+      const method = isFavorite ? 'DELETE' : 'POST';
+      const response = await fetch(`/api/recipes/favorite/${recipe.id}`, {
+        method,
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        setIsFavorite(!isFavorite);
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+    }
+  };
+
+  const downloadPDF = async () => {
+    try {
+      const response = await fetch('/api/meal-plan/pdf', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) throw new Error('Failed to generate PDF');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'meal-plan.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy':
+        return 'bg-green-100 text-green-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'hard':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">{recipe.name}</h2>
-        <div className="flex gap-4 text-sm text-gray-600">
-          <span>Prep time: {recipe.prepTime} minutes</span>
-          <span>Servings: {recipe.servings}</span>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">{recipe.name}</h2>
+          <div className="flex gap-4 text-sm text-gray-600">
+            <span>Prep time: {recipe.prepTime} minutes</span>
+            <span>Servings: {recipe.servings}</span>
+            <Badge className={getDifficultyColor(recipe.difficulty)}>
+              {recipe.difficulty}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {recipe.id && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleFavorite}
+              className={isFavorite ? 'text-yellow-500' : ''}
+            >
+              <Star className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={downloadPDF}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 

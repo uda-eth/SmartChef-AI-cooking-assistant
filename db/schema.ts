@@ -25,6 +25,14 @@ export const recipes = pgTable("recipes", {
   imageUrl: text("image_url"),
   prepTime: integer("prep_time").notNull(),
   servings: integer("servings").notNull(),
+  difficulty: text("difficulty").notNull(), // Added difficulty field
+});
+
+export const favoriteRecipes = pgTable("favorite_recipes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  recipeId: integer("recipe_id").references(() => recipes.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const mealPlans = pgTable("meal_plans", {
@@ -37,6 +45,11 @@ export const mealPlans = pgTable("meal_plans", {
 export const userRelations = relations(users, ({ many }) => ({
   ingredients: many(ingredients),
   mealPlans: many(mealPlans),
+  favoriteRecipes: many(favoriteRecipes),
+}));
+
+export const recipeRelations = relations(recipes, ({ many }) => ({
+  favoriteRecipes: many(favoriteRecipes),
 }));
 
 export type InsertUser = typeof users.$inferInsert;
@@ -47,6 +60,8 @@ export type InsertRecipe = typeof recipes.$inferInsert;
 export type SelectRecipe = typeof recipes.$inferSelect;
 export type InsertMealPlan = typeof mealPlans.$inferInsert;
 export type SelectMealPlan = typeof mealPlans.$inferSelect;
+export type InsertFavoriteRecipe = typeof favoriteRecipes.$inferInsert;
+export type SelectFavoriteRecipe = typeof favoriteRecipes.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -56,3 +71,5 @@ export const insertRecipeSchema = createInsertSchema(recipes);
 export const selectRecipeSchema = createSelectSchema(recipes);
 export const insertMealPlanSchema = createInsertSchema(mealPlans);
 export const selectMealPlanSchema = createSelectSchema(mealPlans);
+export const insertFavoriteRecipeSchema = createInsertSchema(favoriteRecipes);
+export const selectFavoriteRecipeSchema = createSelectSchema(favoriteRecipes);

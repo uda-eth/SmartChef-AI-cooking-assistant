@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
 import { useInventory } from "@/hooks/use-inventory";
@@ -13,6 +13,7 @@ export default function Dashboard() {
   const { user, logout } = useUser();
   const { ingredients, isLoading: isLoadingInventory } = useInventory();
   const { currentPlan, generatePlan, isLoading: isLoadingMealPlan } = useMealPlan();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (ingredients?.length === 0) {
@@ -24,12 +25,17 @@ export default function Dashboard() {
     await logout();
   };
 
-  const handleGeneratePlan = () => {
-    generatePlan({
-      mealCount: 7,
-      dietary: [],
-      cuisineTypes: [],
-    });
+  const handleGeneratePlan = async () => {
+    setIsGenerating(true);
+    try {
+      await generatePlan({
+        mealCount: 7,
+        dietary: [],
+        cuisineTypes: [],
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (isLoadingInventory || isLoadingMealPlan) {
@@ -70,8 +76,18 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold">Your Weekly Meal Plan</h2>
-                <Button onClick={handleGeneratePlan}>
-                  Generate New Plan
+                <Button 
+                  onClick={handleGeneratePlan} 
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating Plan...
+                    </>
+                  ) : (
+                    'Generate New Plan'
+                  )}
                 </Button>
               </div>
               {currentPlan ? (
@@ -79,8 +95,18 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-12">
                   <p className="text-gray-600 mb-4">No meal plan generated yet.</p>
-                  <Button onClick={handleGeneratePlan}>
-                    Generate Your First Meal Plan
+                  <Button 
+                    onClick={handleGeneratePlan}
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Your First Plan...
+                      </>
+                    ) : (
+                      'Generate Your First Meal Plan'
+                    )}
                   </Button>
                 </div>
               )}

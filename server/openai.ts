@@ -27,6 +27,7 @@ export type MealSuggestion = {
   instructions: string[];
   prepTime: number;
   servings: number;
+  difficulty: "easy" | "medium" | "hard";  // Added difficulty rating
 };
 
 export type WeeklyMealPlan = {
@@ -42,7 +43,7 @@ export async function generateMealPlan(request: MealPlanRequest): Promise<Weekly
   const prompt = `Generate a weekly meal plan based on these ingredients and preferences:
     Available Ingredients: ${JSON.stringify(request.ingredients)}
     Preferences: ${JSON.stringify(request.preferences)}
-    
+
     Please provide a meal plan in JSON format with the following structure:
     {
       "meals": [{
@@ -50,11 +51,17 @@ export async function generateMealPlan(request: MealPlanRequest): Promise<Weekly
         "ingredients": [{ "name": string, "quantity": number, "unit": string }],
         "instructions": string[],
         "prepTime": number,
-        "servings": number
+        "servings": number,
+        "difficulty": "easy" | "medium" | "hard"
       }],
       "shoppingList": [{ "name": string, "quantity": number, "unit": string }]
     }
-    
+
+    For each recipe:
+    - Rate difficulty as "easy" if it takes less than 30 minutes and uses basic techniques
+    - Rate as "medium" if it takes 30-60 minutes or requires intermediate techniques
+    - Rate as "hard" if it takes over 60 minutes or requires advanced techniques
+
     The meals should be beginner-friendly and use common cooking techniques.
     Include a shopping list for additional ingredients needed.`;
 
@@ -74,7 +81,7 @@ export async function suggestRecipeSubstitutions(
   const prompt = `Given this recipe and available ingredients, suggest substitutions for missing ingredients:
     Recipe: ${JSON.stringify(recipe)}
     Available Ingredients: ${JSON.stringify(availableIngredients)}
-    
+
     Provide substitutions in JSON format:
     {
       "substitutions": [{ "original": string, "substitute": string }]
