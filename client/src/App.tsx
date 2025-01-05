@@ -5,6 +5,7 @@ import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import InventoryWizard from "./pages/InventoryWizard";
 import Favorites from "./pages/Favorites";
+import Navigation from "./components/Navigation";
 
 function App() {
   const { user, isLoading } = useUser();
@@ -23,11 +24,16 @@ function App() {
   }
 
   return (
-    <Switch>
-      <Route path="/inventory" component={InventoryWizard} />
-      <Route path="/favorites" component={Favorites} />
-      <Route path="/" component={Dashboard} />
-    </Switch>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <main className="max-w-screen-xl mx-auto">
+        <Switch>
+          <Route path="/inventory" component={InventoryWizard} />
+          <Route path="/favorites" component={Favorites} />
+          <Route path="/" component={Dashboard} />
+        </Switch>
+      </main>
+    </div>
   );
 }
 

@@ -18,6 +18,7 @@ type Meal = {
   instructions: string[];
   prepTime: number;
   servings: number;
+  difficulty: "easy" | "medium" | "hard";
 };
 
 type MealCardProps = {
@@ -80,7 +81,7 @@ export default function MealCard({ meal, day }: MealCardProps) {
             size="icon"
             onClick={() => toggleFavoriteMutation.mutate()}
             disabled={toggleFavoriteMutation.isPending}
-            className={isFavorite ? 'text-yellow-500' : ''}
+            className={isFavorite ? 'text-yellow-500 hover:text-yellow-600' : 'hover:text-yellow-500'}
           >
             <Star className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
           </Button>
