@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import RecipeView from "@/components/RecipeView";
-import { Clock } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
 
 type FavoriteRecipe = {
   id: number;
@@ -21,29 +21,34 @@ type FavoriteRecipe = {
 };
 
 export default function Favorites() {
-  const { data: favorites, isLoading } = useQuery<FavoriteRecipe[]>({
+  const { data: favorites, isLoading, error } = useQuery<FavoriteRecipe[]>({
     queryKey: ["/api/recipes/favorites"],
+    // Handle errors gracefully
+    onError: (error) => {
+      console.error("Failed to fetch favorites:", error);
+    }
   });
 
   if (isLoading) {
     return (
       <div className="p-8">
-        <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-6"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="h-[300px] animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-6 w-3/4 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 w-1/4 bg-gray-200 rounded mb-6"></div>
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-gray-200 rounded"></div>
-                  <div className="h-4 w-5/6 bg-gray-200 rounded"></div>
-                  <div className="h-4 w-4/6 bg-gray-200 rounded"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <h1 className="text-2xl font-bold mb-6">My Favorite Recipes</h1>
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-6">My Favorite Recipes</h1>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-500">Failed to load favorite recipes. Please try again later.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -55,6 +60,7 @@ export default function Favorites() {
         <Card>
           <CardContent className="p-6">
             <p className="text-gray-600">You haven't added any favorite recipes yet.</p>
+            <p className="text-gray-600 mt-2">Click the star icon on any recipe to add it to your favorites.</p>
           </CardContent>
         </Card>
       </div>
