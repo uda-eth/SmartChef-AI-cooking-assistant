@@ -64,8 +64,9 @@ export function useUser() {
 
   const loginMutation = useMutation<RequestResult, Error, InsertUser>({
     mutationFn: (userData) => handleRequest('/api/login', 'POST', userData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      await queryClient.refetchQueries({ queryKey: ['user'] });
     },
   });
 
@@ -78,8 +79,9 @@ export function useUser() {
 
   const registerMutation = useMutation<RequestResult, Error, InsertUser>({
     mutationFn: (userData) => handleRequest('/api/register', 'POST', userData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['user'] });
+      await queryClient.refetchQueries({ queryKey: ['user'] });
     },
   });
 
