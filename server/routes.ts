@@ -84,11 +84,15 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
-    // Only get ingredients for the current user
+    // Check if user has ingredients first
     const userIngredients = await db
       .select()
       .from(ingredients)
       .where(eq(ingredients.userId, req.user.id));
+
+    if (userIngredients.length === 0) {
+      return res.status(400).json({ needsOnboarding: true });
+    }
 
     const mealPlan = await generateMealPlan({
       ingredients: userIngredients,

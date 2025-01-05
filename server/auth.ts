@@ -138,7 +138,8 @@ export function setupAuth(app: Express) {
           user: { 
             id: newUser.id, 
             username: newUser.username,
-            hasCompletedOnboarding: newUser.hasCompletedOnboarding 
+            hasCompletedOnboarding: newUser.hasCompletedOnboarding,
+            needsOnboarding: true
           },
         });
       });
