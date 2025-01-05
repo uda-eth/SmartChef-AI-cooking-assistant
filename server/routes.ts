@@ -276,7 +276,7 @@ export function registerRoutes(app: Express): Server {
         ? recipe.instructions
         : typeof recipe.instructions === 'string'
           ? recipe.instructions.startsWith('[')
-            ? JSON.parse(recipe.instructions)
+            ? JSON.parse(recipe.instructions).map(String)
             : recipe.instructions.split("\n").filter(Boolean)
           : [],
       ingredients: Array.isArray(recipe.ingredients)
