@@ -220,10 +220,10 @@ export default function RecipeView({ recipe }: RecipeViewProps) {
       <div>
         <h3 className="text-lg font-semibold mb-3">Instructions</h3>
         <ScrollArea className="h-[300px]">
-          <ol className="space-y-4 list-decimal list-inside">
+          <ol className="space-y-4 list-decimal ml-6">
             {(Array.isArray(recipe.instructions) ? recipe.instructions : recipe.instructions?.split('\n').filter(Boolean) || []).map((step, index) => (
-              <li key={index} className="text-gray-600">
-                {step}
+              <li key={index} className="text-gray-600 pl-2">
+                {step.trim()}
               </li>
             ))}
           </ol>
